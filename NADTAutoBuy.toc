@@ -1,0 +1,11 @@
+## Interface: 50000
+## Title: NADTAutoBuy
+## Author: Karatheya <addons@nadt.net>
+## Version: 1.0.0
+## Notes: Automatically buy items at a merchant
+## SavedVariablesPerCharacter: NAB_DB
+## OptionalDeps: Ace3
+
+embeds.xml
+
+Core.lua
