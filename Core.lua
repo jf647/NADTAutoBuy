@@ -28,6 +28,7 @@ end
 -- /nab disable
 -- /nab list
 -- /nab buying
+-- /nab what
 function NAB:SlashCommand(text)
     local command, rest = text:match("^(%S*)%s*(.-)$")
     if command == "enable" then
@@ -43,10 +44,14 @@ function NAB:SlashCommand(text)
 		else
 			self:Print("buying is now disabled")
 		end
-    else
+    elseif command == "what" then
+		self:ListWhat()
+	else
         self:Print("usage: /nab enable")
         self:Print("       /nab disable")
         self:Print("       /nab list")
+		self:Print("       /nab buying")
+		self:Print("       /nab what")
     end
 end
 
@@ -57,19 +62,8 @@ function NAB:MERCHANT_SHOW()
 	if GetTime()<lastMerchant + 2 then return end
 	lastMerchant = GetTime()
 
-	-- determine what we're low on
-	local onhand
-	local needed = {}
-	for ic, current in pairs( NAB_DB.itemclasses ) do
-		class_onhand = 0
-		for _, item in ipairs( current.items ) do
-			class_onhand = class_onhand + GetItemCount(item)
-		end
-		if class_onhand < current.quantity then
-			needed[ic] = current.quantity - class_onhand
-			self:Printf("need %d of %s (%d on hand, %d wanted)", needed[ic], ic, class_onhand, current.quantity)
-		end
-	end
+	-- find out what we're low on
+	local needed = self:ListWhat()
 	
 	-- buy what we need
 	for ic, tobuy in pairs( needed ) do
@@ -99,8 +93,10 @@ function NAB:FindItemOnMerchant(item)
 	for i = 1, GetMerchantNumItems() do
 		local link, id
 		link = GetMerchantItemLink(i)
-		id = string.match(link, "item:(%d+):") + 0
-		if id == item then return i end
+		if link then
+			id = string.match(link, "item:(%d+):") + 0
+			if id == item then return i end
+		end
 	end
 	
 	return
@@ -121,5 +117,25 @@ function NAB:ListAutoBuy()
 			end
 		end
 	end
+
+end
+
+function NAB:ListWhat()
+
+	-- determine what we're low on
+	local onhand
+	local needed = {}
+	for ic, current in pairs( NAB_DB.itemclasses ) do
+		class_onhand = 0
+		for _, item in ipairs( current.items ) do
+			class_onhand = class_onhand + GetItemCount(item)
+		end
+		if class_onhand < current.quantity then
+			needed[ic] = current.quantity - class_onhand
+			self:Printf("need %d of %s (%d on hand, %d wanted)", needed[ic], ic, class_onhand, current.quantity)
+		end
+	end
+	
+	return needed
 
 end
