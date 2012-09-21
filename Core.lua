@@ -5,6 +5,8 @@ NAB = LibStub("AceAddon-3.0"):NewAddon(
 	"AceEvent-3.0"
 )
 
+buying_enabled = true
+
 function NAB:OnEnable()
 
 	self:RegisterEvent("MERCHANT_SHOW")
@@ -25,6 +27,7 @@ end
 -- /nab enable
 -- /nab disable
 -- /nab list
+-- /nab buying
 function NAB:SlashCommand(text)
     local command, rest = text:match("^(%S*)%s*(.-)$")
     if command == "enable" then
@@ -33,6 +36,13 @@ function NAB:SlashCommand(text)
         self:Disable()
     elseif command == "list" then
 		self:ListAutoBuy()
+    elseif command == "buying" then
+		buying_enabled = not buying_enabled
+		if buying_enabled then
+			self:Print("buying is now enabled")
+		else
+			self:Print("buying is now disabled")
+		end
     else
         self:Print("usage: /nab enable")
         self:Print("       /nab disable")
@@ -74,7 +84,7 @@ function NAB:MERCHANT_SHOW()
 					while tobuy > 0 do
 						local this = min(tobuy, stackcount)
 						self:Printf("buying %d of %s", this, link)
-						BuyMerchantItem(merchslot, this)
+						if buying_enabled then BuyMerchantItem(merchslot, this) end
 						tobuy = tobuy - this
 					end
 				end
@@ -100,10 +110,15 @@ end
 function NAB:ListAutoBuy()
 
 	for ic, current in pairs( NAB_DB.itemclasses ) do
-		self:Printf("ItemClass: %s", ic)
-		self:Printf("  Quantity: %d", current.quantity)
+		self:Printf("ItemClass: %s (%d)", ic, current.quantity)
+		local name
 		for _, item in ipairs( current.items ) do
-			self:Printf("    - %s (%d)", GetItemInfo(item), item)
+			name = GetItemInfo(item)
+			if name then
+				self:Printf(" - %s (%d)", name, item)
+			else
+				self:Printf(" - Unknown (%d)", item)
+			end
 		end
 	end
 
